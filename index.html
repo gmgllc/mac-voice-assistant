@@ -1,1 +1,559 @@
-https://claude.ai/public/artifacts/index
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistant Bot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF6B35;
+            --secondary: #F7931E;
+            --background: #1A1A2E;
+            --surface: #16213E;
+            --text: #EAEAEA;
+            --accent: #00FFB9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 255, 185, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 90%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .bot-face {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            filter: drop-shadow(0 0 30px rgba(255, 107, 53, 0.5));
+        }
+
+        .face-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .eye {
+            animation: blink 4s infinite;
+        }
+
+        @keyframes blink {
+            0%, 48%, 52%, 100% {
+                transform: scaleY(1);
+            }
+            50% {
+                transform: scaleY(0.1);
+            }
+        }
+
+        .mouth {
+            transition: all 0.3s ease;
+        }
+
+        .listening .mouth {
+            animation: talk 0.3s infinite alternate;
+        }
+
+        @keyframes talk {
+            from {
+                d: path("M 60 120 Q 100 140 140 120");
+            }
+            to {
+                d: path("M 60 120 Q 100 130 140 120");
+            }
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .status-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .wake-word {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 1rem;
+            color: var(--secondary);
+            margin-top: 0.5rem;
+        }
+
+        .chat-container {
+            width: 100%;
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 2rem;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            background: rgba(255, 107, 53, 0.2);
+            border-left: 4px solid var(--primary);
+        }
+
+        .message.bot {
+            background: rgba(0, 255, 185, 0.2);
+            border-left: 4px solid var(--accent);
+        }
+
+        .message-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            opacity: 0.7;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            font-family: 'Space Mono', monospace;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .mic-btn {
+            background: var(--primary);
+            color: white;
+            flex: 1;
+        }
+
+        .mic-btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .mic-btn.listening {
+            background: var(--accent);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(0, 255, 185, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(0, 255, 185, 0.8);
+            }
+        }
+
+        .settings-btn {
+            background: var(--surface);
+            color: var(--text);
+            padding: 1rem;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .error {
+            color: var(--primary);
+            text-align: center;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(255, 107, 53, 0.2);
+            border-radius: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .instruction {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="bot-face" id="botFace">
+            <svg class="face-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <!-- Head -->
+                <circle cx="100" cy="100" r="80" fill="var(--primary)" opacity="0.8"/>
+                <circle cx="100" cy="100" r="70" fill="var(--surface)" stroke="var(--accent)" stroke-width="3"/>
+                
+                <!-- Eyes -->
+                <g class="eye">
+                    <ellipse cx="70" cy="85" rx="12" ry="20" fill="var(--accent)"/>
+                </g>
+                <g class="eye">
+                    <ellipse cx="130" cy="85" rx="12" ry="20" fill="var(--accent)"/>
+                </g>
+                
+                <!-- Mouth -->
+                <path class="mouth" d="M 60 120 Q 100 140 140 120" 
+                      stroke="var(--accent)" 
+                      stroke-width="4" 
+                      fill="none" 
+                      stroke-linecap="round"/>
+                
+                <!-- Antenna -->
+                <line x1="100" y1="20" x2="100" y2="35" stroke="var(--accent)" stroke-width="3"/>
+                <circle cx="100" cy="15" r="5" fill="var(--secondary)">
+                    <animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite"/>
+                </circle>
+            </svg>
+        </div>
+
+        <div class="status">
+            <div class="status-text" id="statusText">Ready</div>
+            <div class="wake-word">Say "Hey Bot" to wake me!</div>
+        </div>
+
+        <div class="chat-container" id="chatContainer"></div>
+
+        <div class="controls">
+            <button class="mic-btn" id="micBtn">Start Listening</button>
+            <button class="settings-btn" id="settingsBtn">☙️</button>
+        </div>
+
+        <div class="instruction">
+            <strong>Commands:</strong> "open Excel", "open Safari", "open Chrome", "what time is it", "tell me a joke"
+        </div>
+
+        <div class="error" id="errorMsg" style="display: none;"></div>
+    </div>
+
+    <script>
+        const WAKE_WORD = 'hey bot';
+        let isListening = false;
+        let wakeWordDetected = false;
+        let recognition = null;
+
+        const botFace = document.getElementById('botFace');
+        const statusText = document.getElementById('statusText');
+        const chatContainer = document.getElementById('chatContainer');
+        const micBtn = document.getElementById('micBtn');
+        const errorMsg = document.getElementById('errorMsg');
+
+        // Initialize speech recognition
+        function initSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                showError('Speech recognition not supported in this browser. Please use Chrome or Edge.');
+                return false;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                isListening = true;
+                updateStatus('Listening...');
+                botFace.classList.add('listening');
+                micBtn.classList.add('listening');
+                micBtn.textContent = 'Listening...';
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = Array.from(event.results)
+                    .map(result => result[0].transcript)
+                    .join('')
+                    .toLowerCase()
+                    .trim();
+
+                console.log('Heard:', transcript);
+
+                // Check for wake word
+                if (!wakeWordDetected && transcript.includes(WAKE_WORD)) {
+                    wakeWordDetected = true;
+                    updateStatus('Activated!');
+                    addMessage('bot', 'Hello! How can I help you?');
+                    speak('Hello! How can I help you?');
+                    return;
+                }
+
+                // Process commands if wake word was detected
+                if (wakeWordDetected && event.results[event.results.length - 1].isFinal) {
+                    const command = transcript.replace(WAKE_WORD, '').trim();
+                    if (command) {
+                        processCommand(command);
+                        wakeWordDetected = false; // Reset after command
+                    }
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Recognition error:', event.error);
+                if (event.error === 'not-allowed') {
+                    showError('Microphone access denied. Please allow microphone access.');
+                }
+            };
+
+            recognition.onend = () => {
+                if (isListening) {
+                    recognition.start(); // Restart for continuous wake word detection
+                }
+            };
+
+            return true;
+        }
+
+        function toggleListening() {
+            if (!recognition && !initSpeechRecognition()) {
+                return;
+            }
+
+            if (isListening) {
+                recognition.stop();
+                isListening = false;
+                wakeWordDetected = false;
+                updateStatus('Ready');
+                botFace.classList.remove('listening');
+                micBtn.classList.remove('listening');
+                micBtn.textContent = 'Start Listening';
+            } else {
+                recognition.start();
+            }
+        }
+
+        function processCommand(command) {
+            addMessage('user', command);
+            
+            // App opening commands
+            if (command.includes('open')) {
+                const appMatch = command.match(/open\s+(\w+)/i);
+                if (appMatch) {
+                    const app = appMatch[1].toLowerCase();
+                    openMacApp(app);
+                    return;
+                }
+            }
+
+            // Other commands
+            if (command.includes('time')) {
+                const time = new Date().toLocaleTimeString();
+                const response = `The current time is ${time}`;
+                addMessage('bot', response);
+                speak(response);
+            } else if (command.includes('joke')) {
+                const jokes = [
+                    "Why don't programmers like nature? It has too many bugs!",
+                    "Why do Java developers wear glasses? Because they don't C#!",
+                    "How many programmers does it take to change a light bulb? None, that's a hardware problem!"
+                ];
+                const joke = jokes[Math.floor(Math.random() * jokes.length)];
+                addMessage('bot', joke);
+                speak(joke);
+            } else if (command.includes('hello') || command.includes('hi')) {
+                const response = "Hello! How are you doing today?";
+                addMessage('bot', response);
+                speak(response);
+            } else {
+                const response = "I heard you say: " + command;
+                addMessage('bot', response);
+                speak(response);
+            }
+        }
+
+        function openMacApp(appName) {
+            // Map common names to Mac app names
+            const appMap = {
+                'excel': 'Microsoft Excel',
+                'word': 'Microsoft Word',
+                'powerpoint': 'Microsoft PowerPoint',
+                'safari': 'Safari',
+                'chrome': 'Google Chrome',
+                'firefox': 'Firefox',
+                'notes': 'Notes',
+                'mail': 'Mail',
+                'calendar': 'Calendar',
+                'music': 'Music',
+                'finder': 'Finder',
+                'terminal': 'Terminal',
+                'calculator': 'Calculator',
+                'messages': 'Messages'
+            };
+
+            const macAppName = appMap[appName] || appName;
+            
+            // Create AppleScript command
+            const script = `tell application "${macAppName}" to activate`;
+            
+            // Show message to user
+            const response = `Opening ${macAppName}...`;
+            addMessage('bot', response);
+            speak(`Opening ${macAppName}`);
+
+            // Display instructions for manual execution
+            showExecutionInstructions(script);
+        }
+
+        function showExecutionInstructions(script) {
+            const instructions = document.createElement('div');
+            instructions.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: var(--surface);
+                padding: 2rem;
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+                z-index: 1000;
+                max-width: 500px;
+            `;
+            
+            instructions.innerHTML = `
+                <h3 style="margin-bottom: 1rem; color: var(--accent);">Execute This Command</h3>
+                <p style="margin-bottom: 1rem;">To execute this command, run the following in Terminal:</p>
+                <code style="
+                    display: block;
+                    background: var(--background);
+                    padding: 1rem;
+                    border-radius: 8px;
+                    margin-bottom: 1rem;
+                    overflow-x: auto;
+                    color: var(--accent);
+                ">osascript -e '${script}'</code>
+                <button onclick="this.parentElement.remove()" style="
+                    width: 100%;
+                    background: var(--primary);
+                    color: white;
+                    padding: 0.75rem;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-family: 'Space Mono', monospace;
+                    font-weight: 700;
+                ">Got it!</button>
+            `;
+            
+            document.body.appendChild(instructions);
+        }
+
+        function addMessage(sender, text) {
+            const message = document.createElement('div');
+            message.className = `message ${sender}`;
+            message.innerHTML = `
+                <div class="message-label">${sender === 'user' ? 'You' : 'Bot'}</div>
+                <div>${text}</div>
+            `;
+            chatContainer.appendChild(message);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.1;
+            utterance.pitch = 1.2;
+            speechSynthesis.speak(utterance);
+        }
+
+        function updateStatus(status) {
+            statusText.textContent = status;
+        }
+
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+            setTimeout(() => {
+                errorMsg.style.display = 'none';
+            }, 5000);
+        }
+
+        // Event listeners
+        micBtn.addEventListener('click', toggleListening);
+
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            const newWakeWord = prompt('Enter new wake word:', WAKE_WORD);
+            if (newWakeWord) {
+                WAKE_WORD = newWakeWord.toLowerCase();
+                document.querySelector('.wake-word').textContent = `Say "${newWakeWord}" to wake me!`;
+            }
+        });
+
+        // Initialize on load
+        addMessage('bot', 'Hi! I\'m your assistant. Click "Start Listening" and say "Hey Bot" followed by your command!');
+    </script>
+</body>
+</html>
